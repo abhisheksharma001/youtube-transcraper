@@ -46,11 +46,6 @@ proxy_url = st.sidebar.text_input(
     help="Residential proxy recommended. Free cloud IPs are blocked by YouTube.",
 )
 
-# Build proxy dict
-proxies = None
-if use_proxy and proxy_url.strip():
-    proxies = {"https": proxy_url.strip()}
-
 # Main input
 channel_url = st.text_input(
     "Enter YouTube Channel URL",
@@ -124,7 +119,7 @@ if st.session_state.running:
         add_log(f"[{idx + 1}/{total}] {title[:60]}...")
 
         # Fetch transcript
-        transcript_data = fetch_transcript(video_id, delay=delay, proxies=proxies)
+        transcript_data = fetch_transcript(video_id, delay=delay, proxy_url=proxy_url if use_proxy else None)
 
         if "error" in transcript_data:
             err = transcript_data["error"]

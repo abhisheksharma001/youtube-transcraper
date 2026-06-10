@@ -11,12 +11,13 @@ from youtube_transcript_api._errors import (
     TranscriptsDisabled,
     VideoUnavailable,
 )
+from youtube_transcript_api.proxies import GenericProxyConfig
 
 
 def fetch_transcript(
     video_id: str,
     delay: float = 0.5,
-    proxies: Optional[Dict[str, str]] = None,
+    proxy_url: Optional[str] = None,
 ) -> Dict:
     """
     Fetch English and Hindi transcripts for a YouTube video.
@@ -24,7 +25,7 @@ def fetch_transcript(
     Args:
         video_id: YouTube video ID
         delay: Seconds to sleep after request (rate limiting)
-        proxies: Optional proxy dict, e.g. {"https": "http://user:pass@proxy:port"}
+        proxy_url: Optional proxy URL, e.g. "http://user:pass@proxy:port"
 
     Returns:
         Dict with keys: video_id, en_transcript, hi_transcript, en_available, hi_available
@@ -37,7 +38,11 @@ def fetch_transcript(
         "hi_available": False,
     }
 
-    api = YouTubeTranscriptApi() if proxies is None else YouTubeTranscriptApi(proxies=proxies)
+    if proxy_url:
+        proxy_config = GenericProxyConfig(https_url=proxy_url)
+        api = YouTubeTranscriptApi(proxy_config=proxy_config)
+    else:
+        api = YouTubeTranscriptApi()
 
     try:
         transcript_list = api.list(video_id)
