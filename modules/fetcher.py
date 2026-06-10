@@ -1,23 +1,30 @@
 """Transcript fetcher using youtube-transcript-api."""
 
 import time
-from typing import Dict
+from typing import Dict, Optional
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import (
     CouldNotRetrieveTranscript,
+    IpBlocked,
     NoTranscriptFound,
+    RequestBlocked,
     TranscriptsDisabled,
     VideoUnavailable,
 )
 
 
-def fetch_transcript(video_id: str, delay: float = 0.5) -> Dict:
+def fetch_transcript(
+    video_id: str,
+    delay: float = 0.5,
+    proxies: Optional[Dict[str, str]] = None,
+) -> Dict:
     """
     Fetch English and Hindi transcripts for a YouTube video.
 
     Args:
         video_id: YouTube video ID
         delay: Seconds to sleep after request (rate limiting)
+        proxies: Optional proxy dict, e.g. {"https": "http://user:pass@proxy:port"}
 
     Returns:
         Dict with keys: video_id, en_transcript, hi_transcript, en_available, hi_available
@@ -30,7 +37,7 @@ def fetch_transcript(video_id: str, delay: float = 0.5) -> Dict:
         "hi_available": False,
     }
 
-    api = YouTubeTranscriptApi()
+    api = YouTubeTranscriptApi() if proxies is None else YouTubeTranscriptApi(proxies=proxies)
 
     try:
         transcript_list = api.list(video_id)
@@ -40,6 +47,14 @@ def fetch_transcript(video_id: str, delay: float = 0.5) -> Dict:
         return result
     except VideoUnavailable:
         result["error"] = "Video unavailable"
+        time.sleep(delay)
+        return result
+    except IpBlocked:
+        result["error"] = "IP_BLOCKED"
+        time.sleep(delay)
+        return result
+    except RequestBlocked:
+        result["error"] = "REQUEST_BLOCKED"
         time.sleep(delay)
         return result
     except CouldNotRetrieveTranscript as e:
